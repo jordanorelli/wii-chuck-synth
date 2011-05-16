@@ -19,7 +19,6 @@ intPrompt("Enter Midi Channel for Wiimote input: ") => wiimoteChannel;
 MidiIn wiimoteIn;
 if(!wiimoteIn.open(wiimoteChannel)) me.exit();
 
-
 SinOsc @ oscBank[8][8];
 // that's columns, rows, column step, row step, base frequency, and tones per
 // octave.  If you change the first two, shit will break.  The others you can
@@ -35,7 +34,6 @@ Gain g => OnePole f => dac;
 
 0.20 => float targetGain;
 targetGain => g.gain;
-
 
 for(0 => int i; i < 8; i++) {
     for(0 => int j; j < 8; j++) {
@@ -71,7 +69,6 @@ fun float max(float x, float y) {
         return y;
 }
 
-
 fun void rightHand(MidiIn @ wiiIn) {
     MidiMsg msg;
     while(true) {
@@ -81,7 +78,7 @@ fun void rightHand(MidiIn @ wiiIn) {
                 max(0.00, (msg.data3 - 32) / 95.0)=> targetGain;
                 max(0.00, targetGain) => targetGain;
                 // chout <= msg.data3 <= "\t" <= targetGain <= IO.newline();
-                // targetGain => g.gain;
+                targetGain => g.gain;
             }
         }
     }
@@ -97,7 +94,6 @@ fun void gainSmooth() {
         }
     }
 }
-
 
 Launchpad.Launchpad(lpChannel) @=> Launchpad lp;
 spork ~ leftHand(lp);
