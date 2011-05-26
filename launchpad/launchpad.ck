@@ -47,8 +47,8 @@ public class Launchpad
 
         for(0 => int i; i < 9; i++) {
             for(0 => int j; j < 9; j++) {
-                -1 => lp.lightStatus[i][j];
-                -1 => lp.keyStatus[i][j];
+                false => lp.lightStatus[i][j];
+                false => lp.keyStatus[i][j];
             }
         }
 
