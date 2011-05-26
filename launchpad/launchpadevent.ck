@@ -103,4 +103,8 @@ public class LaunchpadEvent extends Event
         velocity => m.data3;
         return m;
     }
+
+    fun string toString() {
+        return "LaunchpadEvent " + "\t" + Std.itoa(column) + "\t" + Std.itoa(row) + "\t" + Std.itoa(velocity);
+    }
 }
