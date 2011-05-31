@@ -1,5 +1,6 @@
 MidiIn            wm;
 Launchpad         lp;
+OscBank oscBank;
 
 false    =>   int prompt;
 50::samp =>   dur gainResolution;
@@ -9,8 +10,6 @@ false    =>   int prompt;
 0.01     => float pressAttack;
 0.80     => float maxNoteGain;
 0        =>   int rawGain;
-             UGen @ oscBank[8][8];
-             Gain @ patchBank[8][8];
 0        =>   int currentTone;
 false    =>   int sustain;
               int sustainStatus[8][8];
@@ -23,10 +22,12 @@ LaunchpadColor.red => int keyOnColor;
 LaunchpadColor.lightRed => int keySustainColor;
 LaunchpadColor.lightRed => int keySostenutoColor;
 LaunchpadColor.red => int toneChoiceColor;
-ToneCalc.grid(8, 8, 1, 5,  82.4068867, 12.0) @=> float toneMap[][];
+// ToneCalc.grid(8, 8, 1, 5,  82.4068867, 12.0) @=> float toneMap[][];
+ToneCalc.grid(8, 8, 1, 5, 55.0, 12.0) @=> float toneMap[][];
 
 fun void setup()
 {
+    OscBank.OscBank(8, 8, 1, 5, 55.0, 12.0) @=> oscBank;
 
     if(prompt)
     {
@@ -42,97 +43,41 @@ fun void setup()
         connectWiimote(1);
     }
 
-
+    me.yield();
     lp.clear();
     lp.setGridLight(8, currentTone, toneChoiceColor);
-
-    chout <= "Create oscillators" <= IO.newline();
-    for(0 => int i; i < 8; i++)
-    {
-        for(0 => int j; j < 8; j++)
-        {
-            SinOsc s;
-            toneMap[i][j] => s.freq;
-            0.0 => s.gain;
-            chout <= ".";
-
-            Gain g;
-            1.0 => g.gain;
-
-            s @=> oscBank[i][j] => g @=> patchBank[i][j] => dac;
-        }
-    }
-    chout <= "done." <= IO.newline();
 
     spork ~ launchpadListener();
     spork ~ wiiListener();
     spork ~ updateGains();
 }
 
-fun UGen toneChoiceFactory(int toneChoice, UGen @ sourceUGen, float freq)
-{
-    if(toneChoice == 0)
-    {
-        SinOsc s;
-        freq => s.freq;
-        sourceUGen.op() => s.op;
-        sourceUGen.gain() => s.gain;
-        return s;
-    }
-    else if(toneChoice == 1)
-    {
-        TriOsc s;
-        freq => s.freq;
-        sourceUGen.op() => s.op;
-        sourceUGen.gain() => s.gain;
-        return s;
-    }
-    else if(toneChoice == 2)
-    {
-        SqrOsc s;
-        freq => s.freq;
-        sourceUGen.op() => s.op;
-        sourceUGen.gain() => s.gain;
-        return s;
-    }
-    else if(toneChoice == 3)
-    {
-        SawOsc s;
-        freq => s.freq;
-        sourceUGen.op() => s.op;
-        sourceUGen.gain() => s.gain;
-        return s;
-    }
-    else
-    {
-        cherr <= "Unrecognized input fed to toneChoiceFactory: " <= toneChoice
-            <= IO.newline();
-        SinOsc s;
-        freq => s.freq;
-        sourceUGen.op() => s.op;
-        sourceUGen.gain() => s.gain;
-        return s;
-    }
-}
-
 fun void setTone(int toneChoice)
 {
-
     if(toneChoice == currentTone)
     {
         return;
     }
 
-    for(0 => int i; i < 8; i++)
+    if(toneChoice == 0)
     {
-        for(0 => int j; j < 8; j++)
-        {
-            UGen u;
-            toneChoiceFactory(toneChoice, oscBank[i][j], toneMap[i][j]) @=> u;
-            0 => oscBank[i][j].op;
-            oscBank[i][j] =< patchBank[i][j];
-            u @=> oscBank[i][j] => patchBank[i][j];
-        }
+        oscBank.setPatch("SinOsc");
+    }
+    else if(toneChoice == 1)
+    {
+        oscBank.setPatch("SqrOsc");
+    }
+    else if(toneChoice == 2)
+    {
+        oscBank.setPatch("SawOsc");
+    }
+    else if(toneChoice == 3)
+    {
+        oscBank.setPatch("TriOsc");
+    }
+    else
+    {
+        return;
     }
 
     lp.setGridLight(8, currentTone, 0);
@@ -204,16 +149,16 @@ fun void sustainOff()
 
 fun void release(int column, int row)
 {
-    Math.max(oscBank[column][row].gain() - releaseDecay, 0.00)
-        => oscBank[column][row].gain;
+    Math.max(oscBank.gains[column][row].gain() - releaseDecay, 0.00)
+        => oscBank.gains[column][row].gain;
 }
 
 fun void updateSustain(int column, int row, float targetGain)
 {
     if(sustain && sustainStatus[column][row])
     {
-        Math.max(oscBank[column][row].gain() - sustainDecay, 0.00)
-            => oscBank[column][row].gain;
+        Math.max(oscBank.gains[column][row].gain() - sustainDecay, 0.00)
+            => oscBank.gains[column][row].gain;
     }
     else
     {
@@ -225,8 +170,8 @@ fun void updateSostenuto(int column, int row, float targetGain)
 {
     if(sostenuto && sostenutoStatus[column][row])
     {
-        Math.max(oscBank[column][row].gain() - sostenutoDecay, 0.00)
-            => oscBank[column][row].gain;
+        Math.max(oscBank.gains[column][row].gain() - sostenutoDecay, 0.00)
+            => oscBank.gains[column][row].gain;
     }
     else
     {
@@ -236,10 +181,10 @@ fun void updateSostenuto(int column, int row, float targetGain)
 
 fun void update(int column, int row, float targetGain)
 {
-    if(lp.keyDown[column][row] && targetGain > oscBank[column][row].gain())
+    if(lp.keyDown[column][row] && targetGain > oscBank.gains[column][row].gain())
     {
-        Math.min(oscBank[column][row].gain() + pressAttack, maxNoteGain)
-            => oscBank[column][row].gain;
+        Math.min(oscBank.gains[column][row].gain() + pressAttack, maxNoteGain)
+            => oscBank.gains[column][row].gain;
     }
     else
     {
@@ -290,7 +235,7 @@ fun void launchpadListener()
 
         // ignore button presses that are not on the grid
         if(lp.e.column < 0 || lp.e.column > 8) continue;
-        if(lp.e.row < 0 || lp.e.row > 8) continue;
+        if(lp.e.row < 0 || lp.e.row > 7) continue;
 
         if(lp.e.column == 8)
         {
@@ -306,7 +251,7 @@ fun void launchpadListener()
                 true => sustainStatus[lp.e.column][lp.e.row];
             }
             lp.setGridLight(lp.e.column, lp.e.row, keyOnColor);
-            1 => oscBank[lp.e.column][lp.e.row].op;
+            1 => oscBank.bank[lp.e.column][lp.e.row].op;
         }
         else if(sostenuto && sostenutoStatus[lp.e.column][lp.e.row])
         {

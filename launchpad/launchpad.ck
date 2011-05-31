@@ -92,7 +92,7 @@ public class Launchpad
         for(0 => int i; i < 9; i++) {
             for(0 => int j; j < 9; j++) {
                 setGridLight(i, j, 0);
-                10::ms => now;
+                5::ms => now;
             }
         }
     }
