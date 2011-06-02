@@ -1,4 +1,4 @@
-MidiIn            wm;
+OscRecv           wm;
 Launchpad         lp;
 OscBank oscBank;
 
@@ -9,14 +9,13 @@ false    =>   int prompt;
 0.00001   => float sostenutoDecay;
 0.01     => float pressAttack;
 0.80     => float maxNoteGain;
-0        =>   int rawGain;
+0.0      =>   float rawGain;
 0        =>   int currentTone;
 false    =>   int sustain;
               int sustainStatus[8][8];
 false    =>   int sostenuto;
               int sostenutoStatus[8][8];
 0        =>   int lpChannel;
-1        =>   int wiimoteChannel;
 
 LaunchpadColor.red => int keyOnColor;
 LaunchpadColor.lightRed => int keySustainColor;
@@ -32,15 +31,12 @@ fun void setup()
     if(prompt)
     {
         intPrompt("Enter Midi Channel for Launchpad input: ") => lpChannel;
-        intPrompt("Enter Midi Channel for Wiimote input: ") => wiimoteChannel;
 
         Launchpad.Launchpad(lpChannel) @=> lp;
-        connectWiimote(wiimoteChannel);
     }
     else
     {
         Launchpad.Launchpad(0) @=> lp;
-        connectWiimote(1);
     }
 
     me.yield();
@@ -196,7 +192,8 @@ fun void updateGains()
 {
     float targetGain;
     while(true) {
-        Math.max(0.0, (rawGain - 32) / 95.0) => targetGain;
+        // Math.max(0.0, (rawGain - 32) / 95.0) => targetGain;
+        rawGain => targetGain;
 
         for(0 => int i; i < 8; i++)
         {
@@ -268,57 +265,102 @@ fun void launchpadListener()
     }
 }
 
-fun void wiiParser(MidiMsg msg)
+// fun void wiiParser(MidiMsg msg)
+// {
+//     if(msg.data1 == 176) // midi CC
+//     {
+//         if(msg.data2 == 64)
+//         { // wiimote acceleration
+//             msg.data3 => rawGain;
+//         }
+//         else if (msg.data2 == 65)
+//         {   // wiimote button b
+//             if(msg.data3 == 127)
+//             {
+//                 sustainOn();
+//             }
+//             else
+//             {
+//                 sustainOff();
+//             }
+//         }
+//         else if (msg.data2 == 66)
+//         {   // wiimote button a
+//             if(msg.data3 == 127)
+//             {
+//                 sostenutoOn();
+//             }
+//             else
+//             {
+//                 sostenutoOff();
+//             }
+//         }
+//     }
+// }
+
+fun void sustainListener()
 {
-    if(msg.data1 == 176) // midi CC
+    wm.event("/wii/1/button/B,i") @=> OscEvent e;
+    while(true)
     {
-        if(msg.data2 == 64)
-        { // wiimote acceleration
-            msg.data3 => rawGain;
-        }
-        else if (msg.data2 == 65)
-        {   // wiimote button b
-            if(msg.data3 == 127)
-            {
-                sustainOn();
-            }
-            else
+        e => now;
+        while(e.nextMsg() != 0)
+        {
+            if(e.getInt() == 0)
             {
                 sustainOff();
             }
-        }
-        else if (msg.data2 == 66)
-        {   // wiimote button a
-            if(msg.data3 == 127)
-            {
-                sostenutoOn();
-            }
             else
             {
-                sostenutoOff();
+                sustainOn();
             }
         }
     }
 }
 
-fun void connectWiimote(int midiChannel)
+fun void sostenutoListener()
 {
-    if(!wm.open(midiChannel)) me.exit();
+    wm.event("/wii/1/button/A,i") @=> OscEvent e;
+    while(true)
+    {
+        e => now;
+        while(e.nextMsg() != 0)
+        {
+            if(e.getInt() == 0)
+            {
+                sostenutoOff();
+            }
+            else
+            {
+                sostenutoOn();
+            }
+        }
+    }
+}
 
-    chout <= "Midi device: " <= midiChannel <= " -> " <= wm.name()
-        <= IO.newline();
+fun void accelListener()
+{
+    wm.event("/wii/1/accel/pry/3,f") @=> OscEvent e;
+    while(true)
+    {
+        e => now;
+        while(e.nextMsg() != 0)
+        {
+            e.getFloat() => rawGain;
+        }
+    }
 }
 
 fun void wiiListener()
 {
-    MidiMsg msg;
+    6449 => wm.port;
+    wm.listen();
+    spork ~ sustainListener();
+    spork ~ sostenutoListener();
+    spork ~ accelListener();
     while(true)
     {
-        wm => now;
-        while(wm.recv(msg))
-        {
-            wiiParser(msg);
-        }
+        1::second => now;
     }
 }
 
