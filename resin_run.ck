@@ -265,39 +265,6 @@ fun void launchpadListener()
     }
 }
 
-// fun void wiiParser(MidiMsg msg)
-// {
-//     if(msg.data1 == 176) // midi CC
-//     {
-//         if(msg.data2 == 64)
-//         { // wiimote acceleration
-//             msg.data3 => rawGain;
-//         }
-//         else if (msg.data2 == 65)
-//         {   // wiimote button b
-//             if(msg.data3 == 127)
-//             {
-//                 sustainOn();
-//             }
-//             else
-//             {
-//                 sustainOff();
-//             }
-//         }
-//         else if (msg.data2 == 66)
-//         {   // wiimote button a
-//             if(msg.data3 == 127)
-//             {
-//                 sostenutoOn();
-//             }
-//             else
-//             {
-//                 sostenutoOff();
-//             }
-//         }
-//     }
-// }
-
 fun void sustainListener()
 {
     wm.event("/wii/1/button/B,i") @=> OscEvent e;
@@ -346,7 +313,8 @@ fun void accelListener()
         e => now;
         while(e.nextMsg() != 0)
         {
-            e.getFloat() => rawGain;
+            Math.max(0.0, e.getFloat() - 0.22) => rawGain;
+            // chout <= rawGain <= IO.newline();
         }
     }
 }
