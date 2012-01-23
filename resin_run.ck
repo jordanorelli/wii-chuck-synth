@@ -42,6 +42,15 @@ fun void setup()
     spork ~ updateGains();
 }
 
+OscSend           toUI;
+toUI.setHost("localhost", 9000);
+
+fun void sendOsc(string path, int val) {
+    toUI.startMsg(path, "i");
+    val => toUI.addInt;
+    <<< val >>>;
+}
+
 fun void setTone(int toneChoice)
 {
     if(toneChoice == currentTone) { return; }
@@ -63,6 +72,7 @@ fun void setSostenuto(int enabled) {
             lp.keyDown[x][y] && enabled => sostenutoStatus[x][y];
             if(!enabled && !lp.keyDown[x][y] && !sustainStatus[x][y]) {
                 lp.setGridLight(x, y, 0);
+                sendOsc("/grid/noteOff", y * 8 + x);
             }
         }
     }
@@ -76,6 +86,7 @@ fun void setSustain(int enabled) {
             down && enabled => sustainStatus[x][y];
             if(!down && !sostenutoStatus[x][y]) {
                 lp.setGridLight(x, y, 0);
+                sendOsc("/grid/noteOff", y * 8 + x);
             }
         }
     }
@@ -185,6 +196,7 @@ fun void launchpadListener()
             }
             lp.setGridLight(lp.e.column, lp.e.row, keyOnColor);
             1 => oscBank.bank[lp.e.column][lp.e.row].op;
+            sendOsc("/grid/noteOn", lp.e.row * 8 + lp.e.column);
         }
         else if(sostenuto && sostenutoStatus[lp.e.column][lp.e.row])
         {
@@ -197,6 +209,7 @@ fun void launchpadListener()
         else
         {
             lp.setGridLight(lp.e.column, lp.e.row, 0);
+            sendOsc("/grid/noteOff", lp.e.row * 8 + lp.e.column);
         }
     }
 }
