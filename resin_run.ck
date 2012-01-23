@@ -5,11 +5,11 @@ OscBank oscBank;
 false    =>   int prompt;
 50::samp =>   dur gainResolution;
 0.0016   => float releaseDecay;
-0.00001   => float sustainDecay;
-0.00001   => float sostenutoDecay;
+0.00001  => float sustainDecay;
+0.00001  => float sostenutoDecay;
 0.01     => float pressAttack;
 0.80     => float maxNoteGain;
-0.0      =>   float rawGain;
+0.0      => float rawGain;
 0        =>   int currentTone;
 false    =>   int sustain;
               int sustainStatus[8][8];
@@ -21,22 +21,15 @@ LaunchpadColor.red => int keyOnColor;
 LaunchpadColor.lightRed => int keySustainColor;
 LaunchpadColor.lightRed => int keySostenutoColor;
 LaunchpadColor.red => int toneChoiceColor;
-// ToneCalc.grid(8, 8, 1, 5,  82.4068867, 12.0) @=> float toneMap[][];
-// ToneCalc.grid(8, 8, 1, 5, 55.0, 12.0) @=> float toneMap[][];
 
 fun void setup()
 {
-    // OscBank.OscBank(8, 8, 1, 5, 55.0, 12.0) @=> oscBank;
     OscBank.OscBank(8, 8, 1, 5, 82.4068867, 12.0) @=> oscBank;
 
-    if(prompt)
-    {
+    if(prompt) {
         intPrompt("Enter Midi Channel for Launchpad input: ") => lpChannel;
-
         Launchpad.Launchpad(lpChannel) @=> lp;
-    }
-    else
-    {
+    } else {
         Launchpad.Launchpad(0) @=> lp;
     }
 
@@ -51,29 +44,17 @@ fun void setup()
 
 fun void setTone(int toneChoice)
 {
-    if(toneChoice == currentTone)
-    {
+    if(toneChoice == currentTone) {
         return;
-    }
-
-    if(toneChoice == 0)
-    {
+    } else if(toneChoice == 0) {
         oscBank.setPatch("SinOsc");
-    }
-    else if(toneChoice == 1)
-    {
+    } else if(toneChoice == 1) {
         oscBank.setPatch("SqrOsc");
-    }
-    else if(toneChoice == 2)
-    {
+    } else if(toneChoice == 2) {
         oscBank.setPatch("SawOsc");
-    }
-    else if(toneChoice == 3)
-    {
+    } else if(toneChoice == 3) {
         oscBank.setPatch("TriOsc");
-    }
-    else
-    {
+    } else {
         return;
     }
 
@@ -82,32 +63,13 @@ fun void setTone(int toneChoice)
     toneChoice => currentTone;
 }
 
-fun void sostenutoOn()
-{
-    true => sostenuto;
-    for(0 => int i; i < 8; i++)
-    {
-        for(0 => int j; j < 8; j++)
-        {
-            if(lp.keyDown[i][j])
-            {
-                true => sostenutoStatus[i][j];
-            }
-        }
-    }
-}
-
-fun void sostenutoOff()
-{
-    false => sostenuto;
-    for(0 => int i; i < 8; i++)
-    {
-        for(0 => int j; j < 8; j++)
-        {
-            false => sostenutoStatus[i][j];
-            if(!lp.keyDown[i][j])
-            {
-                lp.setGridLight(i, j, 0);
+fun void setSostenuto(int enabled) {
+    enabled => sostenuto;
+    for(0 => int x; x < 8; x++) {
+        for(0 => int y; y < 8; y++) {
+            lp.keyDown[x][y] && enabled => sostenutoStatus[x][y];
+            if(!enabled && !lp.keyDown[x][y]) {
+                lp.setGridLight(x, y, 0);
             }
         }
     }
@@ -289,19 +251,10 @@ fun void sustainListener()
 fun void sostenutoListener()
 {
     wm.event("/wii/1/button/A,i") @=> OscEvent e;
-    while(true)
-    {
+    while(true) {
         e => now;
-        while(e.nextMsg() != 0)
-        {
-            if(e.getInt() == 0)
-            {
-                sostenutoOff();
-            }
-            else
-            {
-                sostenutoOn();
-            }
+        while(e.nextMsg() != 0) {
+            setSostenuto(e.getInt() != 0);
         }
     }
 }
