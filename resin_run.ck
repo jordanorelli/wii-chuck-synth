@@ -9,7 +9,7 @@ false    =>   int prompt;
 0.00001  => float sostenutoDecay;
 0.01     => float pressAttack;
 0.80     => float maxNoteGain;
-0.0      => float rawGain;
+0.0      => float wiiAccel;
 0        =>   int currentTone;
 false    =>   int sustain;
               int sustainStatus[8][8];
@@ -17,9 +17,9 @@ false    =>   int sostenuto;
               int sostenutoStatus[8][8];
 0        =>   int lpChannel;
 
-LaunchpadColor.red => int keyOnColor;
-LaunchpadColor.lightRed => int keySustainColor;
-LaunchpadColor.lightRed => int keySostenutoColor;
+LaunchpadColor.green => int keyOnColor;
+LaunchpadColor.red => int keySustainColor;
+LaunchpadColor.orange => int keySostenutoColor;
 LaunchpadColor.red => int toneChoiceColor;
 
 fun void setup()
@@ -130,13 +130,11 @@ fun void updateGains()
 {
     float targetGain;
     while(true) {
-        // Math.max(0.0, (rawGain - 32) / 95.0) => targetGain;
-        rawGain => targetGain;
+        // Math.max(0.0, (wiiAccel - 32) / 95.0) => targetGain;
+        wiiAccel => targetGain;
 
-        for(0 => int i; i < 8; i++)
-        {
-            for(0 => int j; j < 8; j++)
-            {
+        for(0 => int i; i < 8; i++) {
+            for(0 => int j; j < 8; j++) {
                 update(i, j, targetGain);
             }
         }
@@ -227,13 +225,11 @@ fun void sostenutoListener()
 fun void accelListener()
 {
     wm.event("/wii/1/accel/pry/3,f") @=> OscEvent e;
-    while(true)
-    {
+    while(true) {
         e => now;
-        while(e.nextMsg() != 0)
-        {
-            Math.max(0.0, e.getFloat() - 0.22) => rawGain;
-            chout <= rawGain <= IO.newline();
+        while(e.nextMsg() != 0) {
+            Math.max(0.0, e.getFloat() - 0.22) => wiiAccel;
+            chout <= wiiAccel <= IO.newline();
         }
     }
 }
@@ -246,10 +242,7 @@ fun void wiiListener()
     spork ~ sustainListener();
     spork ~ sostenutoListener();
     spork ~ accelListener();
-    while(true)
-    {
-        1::second => now;
-    }
+    while(true) { 1::second => now; }
 }
 
 setup();
