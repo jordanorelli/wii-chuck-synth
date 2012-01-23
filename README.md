@@ -16,7 +16,7 @@ it's a synthesizer.  Depends on [OSCulator](http://www.osculator.net/) to get Wi
     resin - the actual synth.
 
 to run:  Open up the osc-settings.oscd file in Osculator, discover your
-Wiimote, and turn that sucker on.  Run osc_rcv (`chuck osc_rcv`) to see if you
+Wiimote, and turn that sucker on.  Run osc\_rcv (`chuck osc_rcv`) to see if you
 have communication.  Connect a Novation Launchpad and run the print program
 (`chuck print`) to make sure you're receiving control data from the Launchpad.
 Once you've got the two input devices working, run the actual synth with `chuck
