@@ -44,19 +44,12 @@ fun void setup()
 
 fun void setTone(int toneChoice)
 {
-    if(toneChoice == currentTone) {
-        return;
-    } else if(toneChoice == 0) {
-        oscBank.setPatch("SinOsc");
-    } else if(toneChoice == 1) {
-        oscBank.setPatch("SqrOsc");
-    } else if(toneChoice == 2) {
-        oscBank.setPatch("SawOsc");
-    } else if(toneChoice == 3) {
-        oscBank.setPatch("TriOsc");
-    } else {
-        return;
-    }
+    if(toneChoice == currentTone) { return; }
+    else if(toneChoice == 0)      { oscBank.setPatch("SinOsc"); }
+    else if(toneChoice == 1)      { oscBank.setPatch("SqrOsc"); }
+    else if(toneChoice == 2)      { oscBank.setPatch("SawOsc"); }
+    else if(toneChoice == 3)      { oscBank.setPatch("TriOsc"); }
+    else                          { return; } 
 
     lp.setGridLight(8, currentTone, 0);
     lp.setGridLight(8, toneChoice, toneChoiceColor);
@@ -68,39 +61,21 @@ fun void setSostenuto(int enabled) {
     for(0 => int x; x < 8; x++) {
         for(0 => int y; y < 8; y++) {
             lp.keyDown[x][y] && enabled => sostenutoStatus[x][y];
-            if(!enabled && !lp.keyDown[x][y]) {
+            if(!enabled && !lp.keyDown[x][y] && !sustainStatus[x][y]) {
                 lp.setGridLight(x, y, 0);
             }
         }
     }
 }
 
-fun void sustainOn()
-{
-    true => sustain;
-    for(0 => int i; i < 8; i++)
-    {
-        for(0 => int j; j < 8; j++)
-        {
-            if(lp.keyDown[i][j])
-            {
-                true => sustainStatus[i][j];
-            }
-        }
-    }
-}
-
-fun void sustainOff()
-{
-    false => sustain;
-    for(0 => int i; i < 8; i++)
-    {
-        for(0 => int j; j < 8; j++)
-        {
-            false => sustainStatus[i][j];
-            if(!lp.keyDown[i][j])
-            {
-                lp.setGridLight(i, j, 0);
+fun void setSustain(int enabled) {
+    enabled => sustain;
+    for(0 => int x; x < 8; x++) {
+        for(0 => int y; y < 8; y++) {
+            lp.keyDown[x][y] => int down;
+            down && enabled => sustainStatus[x][y];
+            if(!down && !sostenutoStatus[x][y]) {
+                lp.setGridLight(x, y, 0);
             }
         }
     }
@@ -228,22 +203,12 @@ fun void launchpadListener()
     }
 }
 
-fun void sustainListener()
-{
+fun void sustainListener() {
     wm.event("/wii/1/button/B,i") @=> OscEvent e;
-    while(true)
-    {
+    while(true) {
         e => now;
-        while(e.nextMsg() != 0)
-        {
-            if(e.getInt() == 0)
-            {
-                sustainOff();
-            }
-            else
-            {
-                sustainOn();
-            }
+        while(e.nextMsg() != 0) {
+            setSustain(e.getInt() != 0);
         }
     }
 }
@@ -288,8 +253,4 @@ fun void wiiListener()
 }
 
 setup();
-
-while(true)
-{
-    100::ms => now;
-}
+while(true) { 100::ms => now; }
