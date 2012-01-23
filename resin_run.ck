@@ -22,11 +22,12 @@ LaunchpadColor.lightRed => int keySustainColor;
 LaunchpadColor.lightRed => int keySostenutoColor;
 LaunchpadColor.red => int toneChoiceColor;
 // ToneCalc.grid(8, 8, 1, 5,  82.4068867, 12.0) @=> float toneMap[][];
-ToneCalc.grid(8, 8, 1, 5, 55.0, 12.0) @=> float toneMap[][];
+// ToneCalc.grid(8, 8, 1, 5, 55.0, 12.0) @=> float toneMap[][];
 
 fun void setup()
 {
-    OscBank.OscBank(8, 8, 1, 5, 55.0, 12.0) @=> oscBank;
+    // OscBank.OscBank(8, 8, 1, 5, 55.0, 12.0) @=> oscBank;
+    OscBank.OscBank(8, 8, 1, 5, 82.4068867, 12.0) @=> oscBank;
 
     if(prompt)
     {
@@ -314,7 +315,7 @@ fun void accelListener()
         while(e.nextMsg() != 0)
         {
             Math.max(0.0, e.getFloat() - 0.22) => rawGain;
-            // chout <= rawGain <= IO.newline();
+            chout <= rawGain <= IO.newline();
         }
     }
 }
@@ -322,6 +323,7 @@ fun void accelListener()
 fun void wiiListener()
 {
     6449 => wm.port;
+    // 8000 => wm.port;
     wm.listen();
     spork ~ sustainListener();
     spork ~ sostenutoListener();
