@@ -48,7 +48,6 @@ toUI.setHost("localhost", 9000);
 fun void sendOsc(string path, int val) {
     toUI.startMsg(path, "i");
     val => toUI.addInt;
-    <<< val >>>;
 }
 
 fun void setTone(int toneChoice)
@@ -215,22 +214,22 @@ fun void launchpadListener()
 }
 
 fun void sustainListener() {
-    wm.event("/wii/1/button/B,i") @=> OscEvent e;
+    wm.event("/wii/1/button/B,f") @=> OscEvent e;
     while(true) {
         e => now;
         while(e.nextMsg() != 0) {
-            setSustain(e.getInt() != 0);
+            setSustain(e.getFloat() != 0);
         }
     }
 }
 
 fun void sostenutoListener()
 {
-    wm.event("/wii/1/button/A,i") @=> OscEvent e;
+    wm.event("/wii/1/button/A,f") @=> OscEvent e;
     while(true) {
         e => now;
         while(e.nextMsg() != 0) {
-            setSostenuto(e.getInt() != 0);
+            setSostenuto(e.getFloat() != 0);
         }
     }
 }
@@ -242,7 +241,7 @@ fun void accelListener()
         e => now;
         while(e.nextMsg() != 0) {
             Math.max(0.0, e.getFloat() - 0.22) => wiiAccel;
-            chout <= wiiAccel <= IO.newline();
+            // chout <= wiiAccel <= IO.newline();
         }
     }
 }
